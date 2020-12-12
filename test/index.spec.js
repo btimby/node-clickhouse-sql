@@ -10,6 +10,7 @@ describe('main', function() {
         .from('solved_hashes')
         .select(
           'presetId',
+          s.cast('total', 'Int32'),
           [s.toStartOfMinute('ts'), 't'],
           s.uniq('minerId'),
           s.sum('cpuTime'),
@@ -32,7 +33,7 @@ describe('main', function() {
         .format('json');
 
       assert.equal(sql.toString(), "select  " +
-        "`presetId`,toStartOfMinute(`ts`) as `t`," +
+        "`presetId`,cast(`total`,\'Int32\'),toStartOfMinute(`ts`) as `t`," +
         "uniq(`minerId`),sum(`cpuTime`),sum(`hashes`)," +
         "divide(sum(`hashes`),60) as `hashrate`,avg(`blockReward`)," +
         "avg(`avgReward`),max(`netDiff`),min(`netDiff`)," +

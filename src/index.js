@@ -511,7 +511,9 @@ const Utility = {
   quoteVal, val: quoteVal,
   quoteTerm, term: quoteTerm,
   raw: (s) => new Raw(s),
-
+  cast: (thing, t) => {
+    return new SQLFunction('cast', thing, quoteVal(t));
+  },
 };
 
 

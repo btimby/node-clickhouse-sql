@@ -784,6 +784,9 @@ var Utility = {
   term: quoteTerm,
   raw: function raw(s) {
     return new Raw(s);
+  },
+  cast: function cast(thing, t) {
+    return new SQLFunction('cast', thing, quoteVal(t));
   }
 };
 
