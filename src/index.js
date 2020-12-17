@@ -398,7 +398,11 @@ class Select extends Query {
   }
 
   where(...args) {
-    this.conditions.push(createCondition(...args));
+    if (args.length === 1 && args[0] instanceof Condition) {
+      this.conditions.push(args[0]);
+    } else {
+      this.conditions.push(createCondition(...args));
+    }
     return this;
   }
 
@@ -469,37 +473,37 @@ class Select extends Query {
     from = from.length ? "from " + from.join() : "";
 
 
-    let prewhere = this.preconditions.length ? " prewhere " + this.preconditions : "";
-    let where = this.conditions.length ? " where " + this.conditions : "";
+    let prewhere = this.preconditions.length ? "prewhere " + this.preconditions : "";
+    let where = this.conditions.length ? "where " + this.conditions : "";
 
     let groupby = this.aggregations.length
-      ? " group by " + this.aggregations.map(c => quoteTerm(c)).join()
+      ? "group by " + this.aggregations.map(c => quoteTerm(c)).join()
       : "";
 
-    let having = this.having_conditions.length ? " having " + this.having_conditions : "";
+    let having = this.having_conditions.length ? "having " + this.having_conditions : "";
 
     let order_by = this.order_expressions.length
       ? "order by " + this.order_expressions.map(e => Array.isArray(e) ? quoteTerm(e[0]) + " " + e[1] : quoteTerm(e)).join()
       : "";
 
 
-    let with_totals = this.request_totals ? " with totals " : "";
-    let sample = this.sampling ? " sample " + this.sampling : "";
+    let with_totals = this.request_totals ? "with totals" : "";
+    let sample = this.sampling ? "sample " + this.sampling : "";
 
     let limitby = this.limitbycolumns && this.limitbycolumns.columns.length
-      ? " limit " + this.limitbycolumns.limit + " by " + this.limitbycolumns.columns.map(c => quoteTerm(c)).join()
+      ? "limit " + this.limitbycolumns.limit + " by " + this.limitbycolumns.columns.map(c => quoteTerm(c)).join()
       : '';
 
     let limit = this.limits
-      ? " limit " + this.limits.number + (typeof this.limits.offset === "undefined" ? "" : "," + this.limits.offset)
+      ? "limit " + this.limits.number + (typeof this.limits.offset === "undefined" ? "" : "," + this.limits.offset)
       : '';
 
     let format = this.fmt
       ? " format " + this.fmt.toUpperCase()
       : "";
 
-    return [
-      "select ",
+    const parts = [
+      "select",
       select_list,
       from,
       sample,
@@ -511,9 +515,9 @@ class Select extends Query {
       order_by,
       limitby,
       limit,
-      format,
-    ].join(' ');
+    ].filter((v) => v != '');
 
+    return parts.join(' ');
   }
 }
 
@@ -522,14 +526,25 @@ const Queries = {
   Select
 };
 
+
 const Utility = {
   quoteVal, val: quoteVal,
   quoteTerm, term: quoteTerm,
   raw: (s) => new Raw(s),
-  cast: (thing, t) => {
-    return new SQLFunction('cast', thing, quoteVal(t));
-  },
-  col: (v) => new Term(v),
+  cast: (thing, t) => new SQLFunction('cast', thing, quoteVal(t)),
+  Condition: (...args) => new Condition(...args),
+};
+
+
+const Shortcuts = {
+  And: (...args) => new Conjunction(...args),
+  Or: (...args) => new Disjunction(...args),
+  Eq: (col, val) => new Condition(col, Consts.EQ, val),
+  Ne: (col, val) => new Condition(col, Consts.NE, val),
+  Gte: (col, val) => new Condition(col, Consts.GTE, val),
+  Lte: (col, val) => new Condition(col, Consts.LTE, val),
+  Lt: (col, val) => new Condition(col, Consts.LT, val),
+  Gt: (col, val) => new Conjunction(col, Consts.GT, val),
 };
 
 
@@ -541,6 +556,7 @@ const Dialect = {
   ...IPAddrFunctions,
   ...Consts,
   ...Queries,
-  ...Utility
+  ...Utility,
+  ...Shortcuts,
 };
 export default Dialect;

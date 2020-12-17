@@ -32,16 +32,16 @@ describe('main', function() {
         .limitBy(5, 'presetId')
         .format('json');
 
-      assert.equal(sql.toString(), "select  " +
+      assert.equal(sql.toString(), "select " +
         "`presetId`,cast(`total`,\'Int32\'),toStartOfMinute(`ts`) as `t`," +
         "uniq(`minerId`),sum(`cpuTime`),sum(`hashes`)," +
         "divide(sum(`hashes`),60) as `hashrate`,avg(`blockReward`)," +
         "avg(`avgReward`),max(`netDiff`),min(`netDiff`)," +
         "sum(multiply(multiply(`hashes`,divide(`blockReward`,`netDiff`)),0.8)) as `approx reward in XMR` " +
-        "from `solved_hashes`   " +
-        "prewhere (`ts` < toStartOfMinute(now())) and (`accountId` = '5a7484afe90bab6ecc346aa4')   " +
-        "group by `presetId`,`t`  with totals   " +
-        "order by `t`  limit 5 by `presetId`  limit 1000  format JSON")
+        "from `solved_hashes` " +
+        "prewhere (`ts` < toStartOfMinute(now())) and (`accountId` = '5a7484afe90bab6ecc346aa4') " +
+        "group by `presetId`,`t` with totals " +
+        "order by `t` limit 5 by `presetId` limit 1000")
     });
 
     it('from chain', () => {
@@ -59,8 +59,8 @@ describe('main', function() {
 
       assert.equal(
         q.trim(),
-        "select  * from `table0`,`table1` as `alias1`,`table2` as `alias2`   " +
-        "prewhere ((`ts` < toStartOfMinute(now()))) or (`ts` > toStartOfYear(now()))  " +
+        "select * from `table0`,`table1` as `alias1`,`table2` as `alias2` " +
+        "prewhere ((`ts` < toStartOfMinute(now()))) or (`ts` > toStartOfYear(now())) " +
         "where ((`my life` = 'is taken')) or (`annihilation` <= any(`Suffocation`,`disintegration`))"
       );
     });
@@ -78,12 +78,27 @@ describe('main', function() {
       const q = selectBuilder
         .select('a.a', 'a.b', 'b.c', 'b.d')
         .from(['table0', 'a'], [q0, 'b'])
-        .where('a.c', s.EQ, s.col('b.c'))
+        .where('a.c', s.EQ, s.term('b.c')).toString();
+
+      assert.equal(
+        q.trim(),
+        "select `a`.`a`,`a`.`b`,`b`.`c`,`b`.`d` from `table0` as `a`,(select `a`,`b`,`c` from `table1` where (`a` = 1)) as `b` where (`a`.`c` = `b`.`c`)"
+      )
+    });
+
+    it('mixed boolean operators', () => {
+      const s = Dialect;
+      let selectBuilder = new Dialect.Select();
+
+      const q = selectBuilder
+        .from('table0')
+        .where(s.Or(s.Eq('a', 1), s.Eq('a', 2)))
+        .where(s.And(s.Eq('b', 1), s.Eq('c', 1)))
         .toString();
 
       assert.equal(
         q.trim(),
-        "select  `a`.`a`,`a`.`b`,`b`.`c`,`b`.`d` from `table0` as `a`,(select  `a`,`b`,`c` from `table1`    where (`a` = 1)       ) as `b`    where (`a`.`c` = `b`.`c`)"
+        "select * from `table0` where ((`a` = 1) or (`a` = 2)) and ((`b` = 1) and (`c` = 1))"
       );
     });
 });
