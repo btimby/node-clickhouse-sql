@@ -94,11 +94,27 @@ describe('main', function() {
         .from('table0')
         .where(s.Or(s.Eq('a', 1), s.Eq('a', 2)))
         .where(s.And(s.Eq('b', 1), s.Eq('c', 1)))
+        .select('a', 'b')
         .toString();
 
       assert.equal(
         q.trim(),
-        "select * from `table0` where ((`a` = 1) or (`a` = 2)) and ((`b` = 1) and (`c` = 1))"
+        "select `a`,`b` from `table0` where ((`a` = 1) or (`a` = 2)) and ((`b` = 1) and (`c` = 1))"
+      );
+    });
+
+    it('in operator', () => {
+      const s = Dialect;
+      let selectBuilder = new Dialect.Select();
+
+      const q = selectBuilder
+        .from('table0')
+        .where(s.in('a', [1, 2, 3]))
+        .toString();
+
+      assert.equal(
+        q.trim(),
+        "select * from `table0` where (`a` in (1,2,3))"
       );
     });
 });

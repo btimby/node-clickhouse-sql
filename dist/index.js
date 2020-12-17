@@ -231,7 +231,7 @@ var InclusionOperator = /*#__PURE__*/function (_Condition2) {
   _createClass(InclusionOperator, [{
     key: "toString",
     value: function toString() {
-      return [this.column, this.operator, "(", Array.isArray(this.value) ? this.value.map(function (val) {
+      return [quoteTerm(this.column), " ", this.operator, " (", Array.isArray(this.value) ? this.value.map(function (val) {
         return quoteVal(val);
       }).join(',') : this.value, ")"].join('');
     }
@@ -873,6 +873,12 @@ var Shortcuts = {
   },
   Gt: function Gt(col, val) {
     return new Conjunction(col, Consts.GT, val);
+  },
+  "in": function _in(col, values) {
+    return new In(col, null, values);
+  },
+  notIn: function notIn(col, values) {
+    return new NotIn(col, null, values);
   }
 };
 

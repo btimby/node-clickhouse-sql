@@ -104,9 +104,10 @@ class InclusionOperator extends Condition {
 
   toString() {
     return [
-      this.column,
+      quoteTerm(this.column),
+      " ",
       this.operator,
-      "(",
+      " (",
       Array.isArray(this.value)
         ? this.value.map(val => quoteVal(val)).join(',')
         : this.value,
@@ -545,6 +546,8 @@ const Shortcuts = {
   Lte: (col, val) => new Condition(col, Consts.LTE, val),
   Lt: (col, val) => new Condition(col, Consts.LT, val),
   Gt: (col, val) => new Conjunction(col, Consts.GT, val),
+  in: (col, values) => new In(col, null, values),
+  notIn: (col, values) => new NotIn(col, null, values),
 };
 
 
